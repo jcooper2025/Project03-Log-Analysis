@@ -47,6 +47,12 @@ def question_2(db):
 
 def question_3(db):
 	return output
+
+# format and send output to file.
+def generateLog(out):
+
+
+def main():
 	
 # 
 if __name__ == "__main__":
