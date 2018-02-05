@@ -27,4 +27,27 @@ output_q2 = """
 output_q3 = """
 """
 
+# Strings to hold constants related to the formatted output.
+cellBorders = """
+"""
+tableHeader = """
+"""
+
+# function declarations.
+# set up database connections
+def connectDB():
+	return db
+
+# execute queries to answer each question
+def question_1(db):
+	return output
+
+def question_2(db):
+	return output
+
+def question_3(db):
+	return output
+	
 # 
+if __name__ == "__main__":
+	main()
