@@ -47,32 +47,19 @@ FROM articles, goodviews
 WHERE articles.slug
 LIKE '%'||TRIM(leading '/articles/' FROM goodviews.path)||'%';
 """
-# query_q2 = """
-# """
-# query_q3 = """
-# """
 
-# Strings to hold the returned data from each query.
-output_q1 = """
+mostPopAuthors = """SELECT DISTINCT name, SUM(numofviews)
+OVER (PARTITION BY name) AS authorviews
+FROM q2v1, q2v2
+WHERE q2v1.title = q2v2.title
+GROUP BY (name, numofviews)
+ORDER BY authorviews DESC;
 """
-# output_q2 = """
-# """
-# output_q3 = """
-# """
-
-# Strings to hold constants related to the formatted output.
-# cellBorders = """
-# """
-# tableHeader = """
+# query_q3 = """
 # """
 
 # database name is declared here to be accessable to all functions.
 DBNAME = "news"
-
-# function declarations.
-# set up database connections
-# def connectDB():
-#   return db, cursor
 
 
 def create_all_views():
@@ -100,43 +87,58 @@ def question_1():
 
     return output
 
-# def question_2(db):
-#   return output
+def question_2():
+    db = psycopg2.connect(database=DBNAME)
+    cursor = db.cursor()
+    cursor.execute(mostPopAuthors)
+    output = cursor.fetchall()
+    db.close()
+
+    return output
 
 # def question_3(db):
 #   return output
 
 
 # format and send output to file.
-def generateLog(out):
+def generateLog(outq1, outq2):
+    # generating formatted string for output of question 1
     output_q1 = "\n\t\tArticles Ranked by Popularity\n"
     output_q1 += '-'*60 + "\n"
     output_q1 += '{0:40} | {1:20}'.format('Article', 'Number Of Views') + '\n'
     output_q1 += '-'*60 + "\n"
-    for ele in out:
+    for ele in outq1:
         output_q1 += '{0:40} | {1:15}'.format(ele[0], ele[1]) + "\n"
         output_q1 += '-'*60 + "\n"
 
+    # generating formatted string for output of question 2
+    output_q2 = "\n\t\tAuthors Ranked by Popularity\n"
+    output_q2 += '-'*60 + "\n"
+    output_q2 += '{0:40} | {1:20}'.format('Authors', 'Number Of Views') + '\n'
+    output_q2 += '-'*60 + "\n"
+    for ele in outq2:
+        output_q2 += '{0:40} | {1:15}'.format(ele[0], ele[1]) + "\n"
+        output_q2 += '-'*60 + "\n"
+
+
     with open('report.txt', 'w') as f:
         f.write(output_q1)
+        f.write(output_q2)
     f.close()
 
-    print("\n\t\tArticles Ranked by Popularity\n")
-    print('-'*60)
-    print('{0:40} | {1:20}'.format('Article', 'Number Of Views'))
-    print('-'*60)
-    for ele in out:
-        print('{0:40} | {1:15}'.format(ele[0], ele[1]))
-        print('-'*60)
+    print(output_q1)
+    print(output_q2)
 
 
 def main():
 
     create_all_views()
-    outlog = question_1()
+    outlog_q1 = question_1()
+    outlog_q2 = question_2()
+
     # print(type(outlog))
     # print(outlog)
-    generateLog(outlog)
+    generateLog(outlog_q1, outlog_q2)
 
 #
 if __name__ == "__main__":
