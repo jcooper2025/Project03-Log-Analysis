@@ -1,4 +1,9 @@
 #!/usr/bin/python
+"""
+This file serves as a report generating script for the 'News' database.
+
+It generates an onscreen report and output file to answer hardcoded queries.
+"""
 
 # This script will create a report that answers the following three questions:
 # 1. What are the most popular articles of all time? Which articles have been
@@ -20,26 +25,26 @@ import psycopg2
 # all the questions. Strings to hold the views that are created for each
 # question.
 # Views to simplify the queries.
-articleList = """CREATE VIEW articleList AS
+articleList = """CREATE OR REPLACE VIEW articleList AS
 SELECT path, status, COUNT(id) AS NumOfViews FROM log
 GROUP BY (path, status)
 ORDER BY COUNT(id) DESC;
 """
 
-goodViews = """CREATE VIEW goodviews AS
+goodViews = """CREATE OR REPLACE VIEW goodviews AS
 SELECT * FROM articleList
 WHERE SUBSTRING(status, 1, 6) = '200 OK'
 AND OCTET_LENGTH(path) > OCTET_LENGTH('/');
 """
 
 # create a view with authors and their associated articles by title.
-authorsTitles = """CREATE VIEW name_titleView AS
+authorsTitles = """CREATE OR REPLACE VIEW name_titleView AS
 SELECT name, title FROM authors, articles
 WHERE authors.id = articles.author;
 """
 
 # create a view with article title and the number of views it has.
-titleViews = """CREATE VIEW title_numberView AS
+titleViews = """CREATE OR REPLACE VIEW title_numberView AS
 SELECT articles.title, goodviews.numofviews
 FROM articles, goodviews
 WHERE articles.slug
@@ -47,7 +52,7 @@ LIKE '%'||TRIM(leading '/articles/' FROM goodviews.path)||'%';
 """
 
 # this gives all of the requests for each day.
-dailyTotalView = """CREATE VIEW daily_totalView AS
+dailyTotalView = """CREATE OR REPLACE VIEW daily_totalView AS
 SELECT date_trunc('day', time), COUNT(*)
 FROM log
 GROUP BY date_trunc('day', time)
@@ -55,7 +60,7 @@ ORDER BY count DESC;
 """
 
 # this will give all of the requests in a day that resulted in an error.
-dailyErrorView = """CREATE VIEW daily_errorView AS
+dailyErrorView = """CREATE OR REPLACE VIEW daily_errorView AS
 SELECT date_trunc('day', time), COUNT(*)
 FROM log WHERE status != '200 OK'
 GROUP BY date_trunc('day', time)
@@ -91,13 +96,7 @@ cursor = db.cursor()
 
 
 def create_all_views():
-    # do cleanup in case there are any views from previous runs.
-    cursor.execute("drop view if exists name_titleView cascade;")
-    cursor.execute("drop view if exists title_numberView cascade;")
-    cursor.execute("drop view if exists goodviews cascade;")
-    cursor.execute("drop view if exists articleList cascade;")
-    cursor.execute("drop view if exists daily_totalView cascade;")
-    cursor.execute("drop view if exists daily_errorView cascade;")
+    """Do cleanup in case there are any views from previous runs."""
     cursor.execute(articleList)
     cursor.execute(goodViews)
     cursor.execute(authorsTitles)
@@ -108,18 +107,33 @@ def create_all_views():
 
 # execute queries to answer each question
 def question_1():
+    """
+    Execute query to find the most popular articles.
+
+    Return the output as a list of tuples.
+    """
     cursor.execute(mostPopArticles)
     output = cursor.fetchall()
     return output
 
 
 def question_2():
+    """
+    Execute query to find the most popular authors.
+
+    Return the output as a list of tuples.
+    """
     cursor.execute(mostPopAuthors)
     output = cursor.fetchall()
     return output
 
 
 def question_3():
+    """
+    Find the dates when more than 1% of the view requests resulted in errors.
+
+    Return the output as a list of tuples.
+    """
     cursor.execute(mostErrorDays)
     output = cursor.fetchall()
     return output
@@ -127,6 +141,11 @@ def question_3():
 
 # format and send output to file.
 def generateLog(outq1, outq2, outq3):
+    """
+    Generate output strings for all three questions.
+
+    Print formatted output to the screen and a report file.
+    """
     # generating formatted string for output of question 1
     output_q1 = "\n\t\tArticles Ranked by Popularity\n"
     output_q1 += '-'*60 + "\n"
@@ -171,7 +190,11 @@ def generateLog(outq1, outq2, outq3):
 
 
 def main():
+    """
+    Call specialized functions to execute script steps and run queries.
 
+    Print out results to screen and write to a file.
+    """
     create_all_views()
     outlog_q1 = question_1()
     outlog_q2 = question_2()
@@ -180,6 +203,7 @@ def main():
     db.close()
 
     generateLog(outlog_q1, outlog_q2, outlog_q3)
+
 
 if __name__ == "__main__":
     main()

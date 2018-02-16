@@ -17,12 +17,12 @@ The following are the SQL views and queries that are run to compile the informat
 
 ### Question 1 views and query
 
-CREATE VIEW articleList AS
+CREATE OR REPLACE VIEW articleList AS
 SELECT path, status, COUNT(id) AS NumOfViews FROM log
 GROUP BY (path, status)
 ORDER BY COUNT(id) DESC;
 
-CREATE VIEW goodviews AS
+CREATE OR REPLACE VIEW goodviews AS
 SELECT * FROM articleList
 WHERE SUBSTRING(status, 1, 6) = '200 OK'
 AND OCTET_LENGTH(path) > OCTET_LENGTH('/');
@@ -34,11 +34,11 @@ LIKE '%'||TRIM(leading '/articles/' FROM goodviews.path)||'%';
 
 ### Question 2 views and query
 
-CREATE VIEW name_titleView AS
+CREATE OR REPLACE VIEW name_titleView AS
 SELECT name, title FROM authors, articles
 WHERE authors.id = articles.author;
 
-CREATE VIEW title_numberView AS
+CREATE OR REPLACE VIEW title_numberView AS
 SELECT articles.title, goodviews.numofviews
 FROM articles, goodviews
 WHERE articles.slug
@@ -53,13 +53,13 @@ ORDER BY authorviews DESC;
 
 ### Question 3 views and query
 
-CREATE VIEW daily_totalView AS
+CREATE OR REPLACE VIEW daily_totalView AS
 SELECT date_trunc('day', time), COUNT(*)
 FROM log
 GROUP BY date_trunc('day', time)
 ORDER BY count DESC;
 
-CREATE VIEW daily_errorView AS
+CREATE OR REPLACE VIEW daily_errorView AS
 SELECT date_trunc('day', time), COUNT(*)
 FROM log WHERE status != '200 OK'
 GROUP BY date_trunc('day', time)
